@@ -6,6 +6,8 @@
         <field name="bankOrderFileFormat" onChange="action-ebics-partner-service-record-default-bank-order-codification"
             canNew="false" canEdit="false" required="true"/>
         <field name="ebicsCodification" required="true"/>
+        <field name="numberOfSignatures" showIf="$get('bankStatementEbicsPartner.ebicsTypeSelect') == 1"/>
+        <field name="bankStatementEbicsPartner.ebicsTypeSelect" hidden="true"/>
     </grid>
 
     <form name="ebics-partner-service-form" title="Ebics partner B.O. service" model="com.axelor.apps.bankpayment.db.EbicsPartnerService">
@@ -13,6 +15,8 @@
             <field name="bankOrderFileFormat" onChange="action-ebics-partner-service-record-default-bank-order-codification"
                 canNew="false" canEdit="false" required="true"/>
             <field name="ebicsCodification" required="true"/>
+            <field name="numberOfSignatures" showIf="$get('bankStatementEbicsPartner.ebicsTypeSelect') == 1"/>
+    		<field name="bankStatementEbicsPartner.ebicsTypeSelect" hidden="true"/>
         </panel>
     </form>
     

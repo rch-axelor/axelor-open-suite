@@ -72,6 +72,16 @@ public class BankOrderController {
 
     BankOrder bankOrder = request.getContext().asType(BankOrder.class);
     bankOrder = bankOrderRepo.find(bankOrder.getId());
+
+    boolean signing = false;
+    Integer numberOfSignature = bankOrderService.getNumberOfSignature(bankOrder);
+    if (numberOfSignature == 1
+        || (numberOfSignature == 2
+            && bankOrder.getBankOrderSignatureList() != null
+            && bankOrder.getBankOrderSignatureList().size() == 1)) {
+      signing = true;
+    }
+
     try {
       ActionViewBuilder confirmView =
           ActionView.define("Sign bank order")
@@ -82,6 +92,7 @@ public class BankOrderController {
               .param("show-confirm", "false")
               .param("popup-save", "false")
               .param("forceEdit", "true")
+              .context("signing", signing)
               .context("_showRecord", bankOrder.getId());
 
       response.setView(confirmView.map());
@@ -106,6 +117,7 @@ public class BankOrderController {
       } else {
         if (ebicsUser.getEbicsPartner().getEbicsTypeSelect()
             == EbicsPartnerRepository.EBICS_TYPE_TS) {
+          bankOrderService.createBankOrderSignature(bankOrder, ebicsUser);
           bankOrderService.validate(bankOrder);
         } else {
           if (context.get("password") == null) {
@@ -117,6 +129,7 @@ public class BankOrderController {
               response.setValue("password", "");
               response.setError(I18n.get(IExceptionMessage.EBICS_WRONG_PASSWORD));
             } else {
+              bankOrderService.createBankOrderSignature(bankOrder, ebicsUser);
               bankOrderService.validate(bankOrder);
             }
           }
@@ -267,5 +280,13 @@ public class BankOrderController {
     } catch (Exception e) {
       TraceBackService.trace(response, e);
     }
+  }
+
+  public void createBankOrderSignature(ActionRequest request, ActionResponse response) {
+    BankOrder bankOrder = request.getContext().asType(BankOrder.class);
+    EbicsUser ebicsUser = bankOrder.getSignatoryEbicsUser();
+    bankOrder = bankOrderRepo.find(bankOrder.getId());
+    bankOrderService.createBankOrderSignature(bankOrder, ebicsUser);
+    response.setReload(true);
   }
 }

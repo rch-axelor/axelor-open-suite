@@ -22,6 +22,7 @@ import com.axelor.apps.bankpayment.db.BankOrderFileFormat;
 import com.axelor.apps.bankpayment.db.EbicsUser;
 import com.axelor.apps.base.db.BankDetails;
 import com.axelor.exception.AxelorException;
+import com.axelor.meta.CallMethod;
 import com.axelor.meta.schema.actions.ActionView.ActionViewBuilder;
 import com.google.inject.persist.Transactional;
 import java.io.File;
@@ -88,4 +89,9 @@ public interface BankOrderService {
 
   public ActionViewBuilder buildBankOrderLineView(
       String gridViewName, String formViewName, String viewDomain);
+
+  @CallMethod
+  public Integer getNumberOfSignature(BankOrder bankOrder);
+
+  public void createBankOrderSignature(BankOrder bankOrder, EbicsUser ebicsUser);
 }

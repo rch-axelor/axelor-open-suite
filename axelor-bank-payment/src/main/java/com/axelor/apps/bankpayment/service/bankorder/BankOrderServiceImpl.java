@@ -24,8 +24,10 @@ import com.axelor.apps.account.service.payment.invoice.payment.InvoicePaymentCan
 import com.axelor.apps.bankpayment.db.BankOrder;
 import com.axelor.apps.bankpayment.db.BankOrderFileFormat;
 import com.axelor.apps.bankpayment.db.BankOrderLine;
+import com.axelor.apps.bankpayment.db.BankOrderSignature;
 import com.axelor.apps.bankpayment.db.BankPaymentConfig;
 import com.axelor.apps.bankpayment.db.EbicsPartner;
+import com.axelor.apps.bankpayment.db.EbicsPartnerService;
 import com.axelor.apps.bankpayment.db.EbicsUser;
 import com.axelor.apps.bankpayment.db.repo.BankOrderFileFormatRepository;
 import com.axelor.apps.bankpayment.db.repo.BankOrderRepository;
@@ -56,6 +58,7 @@ import com.axelor.exception.db.repo.TraceBackRepository;
 import com.axelor.i18n.I18n;
 import com.axelor.inject.Beans;
 import com.axelor.mail.db.repo.MailFollowerRepository;
+import com.axelor.meta.CallMethod;
 import com.axelor.meta.MetaFiles;
 import com.axelor.meta.schema.actions.ActionView;
 import com.axelor.meta.schema.actions.ActionView.ActionViewBuilder;
@@ -69,6 +72,8 @@ import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -250,7 +255,7 @@ public class BankOrderServiceImpl implements BankOrderService {
       bankOrderLineService.checkBankDetails(
           bankOrderLine.getReceiverBankDetails(), bankOrderLine.getBankOrder());
     }
-    if (!totalAmount.equals(arithmeticTotal)) {
+    if (totalAmount.compareTo(arithmeticTotal) != 0) {
       throw new AxelorException(
           TraceBackRepository.CATEGORY_INCONSISTENCY,
           I18n.get(IExceptionMessage.BANK_ORDER_LINE_TOTAL_AMOUNT_INVALID));
@@ -375,20 +380,23 @@ public class BankOrderServiceImpl implements BankOrderService {
 
     File dataFileToSend = null;
     File signatureFileToSend = null;
+    dataFileToSend = MetaFiles.getPath(bankOrder.getGeneratedMetaFile()).toFile();
 
     if (bankOrder.getSignatoryEbicsUser().getEbicsPartner().getEbicsTypeSelect()
         == EbicsPartnerRepository.EBICS_TYPE_TS) {
-      if (bankOrder.getSignedMetaFile() == null) {
+      if (bankOrder.getBankOrderSignatureList() == null) {
         throw new AxelorException(
-            I18n.get(IExceptionMessage.BANK_ORDER_NOT_PROPERLY_SIGNED),
-            TraceBackRepository.CATEGORY_NO_VALUE);
+            TraceBackRepository.CATEGORY_NO_VALUE,
+            I18n.get(IExceptionMessage.BANK_ORDER_NOT_PROPERLY_SIGNED));
       }
 
-      signatureFileToSend = MetaFiles.getPath(bankOrder.getSignedMetaFile()).toFile();
+      for (BankOrderSignature boSignature : bankOrder.getBankOrderSignatureList()) {
+        signatureFileToSend = MetaFiles.getPath(boSignature.getSignedMetaFile()).toFile();
+        sendFile(bankOrder, dataFileToSend, signatureFileToSend);
+      }
+    } else {
+      sendFile(bankOrder, dataFileToSend, signatureFileToSend);
     }
-    dataFileToSend = MetaFiles.getPath(bankOrder.getGeneratedMetaFile()).toFile();
-
-    sendFile(bankOrder, dataFileToSend, signatureFileToSend);
   }
 
   @Transactional(rollbackOn = {Exception.class})
@@ -817,5 +825,39 @@ public class BankOrderServiceImpl implements BankOrderService {
             .add("form", formViewName)
             .domain(viewDomain);
     return actionViewBuilder;
+  }
+
+  @Override
+  @CallMethod
+  public Integer getNumberOfSignature(BankOrder bankOrder) {
+    if (Beans.get(AppBankPaymentService.class).getAppBankPayment().getEnableEbicsModule()
+        && bankOrder != null
+        && bankOrder.getSignatoryEbicsUser() != null) {
+      EbicsPartner ebicsPartner = bankOrder.getSignatoryEbicsUser().getEbicsPartner();
+      if (ebicsPartner != null && ebicsPartner.getBoEbicsPartnerServiceList() != null) {
+        for (EbicsPartnerService service : ebicsPartner.getBoEbicsPartnerServiceList()) {
+          if (bankOrder.getBankOrderFileFormat().equals(service.getBankOrderFileFormat())) {
+            return service.getNumberOfSignatures();
+          }
+        }
+      }
+    }
+    return 1;
+  }
+
+  @Transactional
+  @Override
+  public void createBankOrderSignature(BankOrder bankOrder, EbicsUser ebicsUser) {
+    BankOrderSignature bankOrderSignature = new BankOrderSignature();
+
+    bankOrderSignature.setSignatureDateT(
+        Beans.get(AppBaseService.class).getTodayDate().atTime(LocalTime.now()));
+    bankOrderSignature.setEbicUser(ebicsUser);
+
+    if (bankOrder.getBankOrderSignatureList() == null) {
+      bankOrder.setBankOrderSignatureList(new ArrayList<>());
+    }
+    bankOrder.getBankOrderSignatureList().add(bankOrderSignature);
+    bankOrderRepo.save(bankOrder);
   }
 }

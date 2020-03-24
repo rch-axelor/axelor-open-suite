@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_5.1.xsd">
+
+	<grid name="bank-order-signature-grid" title="Bank order signatures"
+		model="com.axelor.apps.bankpayment.db.BankOrderSignature" edit-icon="true">
+		<field name="signedMetaFile" />
+		<field name="ebicUser" />
+		<field name="signatureDateT" />
+	</grid>
+
+	<form name="bank-order-signature-form" title="Bank order signature"
+		model="com.axelor.apps.bankpayment.db.BankOrderSignature">
+		<panel name="mainPanel">
+			<field name="signedMetaFile" widget="binary-link" />
+			<field name="ebicUser" />
+			<field name="signatureDateT" />
+		</panel>
+	</form>
+
+</object-views>

@@ -51,7 +51,7 @@ public class BankOrderManagementRepository extends BankOrderRepository {
 
     copy.setStatusSelect(STATUS_DRAFT);
     copy.setGeneratedMetaFile(null);
-    copy.setSignedMetaFile(null);
+    copy.setBankOrderSignatureList(null);
     copy.setConfirmationDateTime(null);
     copy.setFileGenerationDateTime(null);
     copy.setValidationDateTime(null);
