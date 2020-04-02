@@ -22,12 +22,17 @@ import com.axelor.apps.account.db.AnalyticDistributionLine;
 import com.axelor.apps.account.db.AnalyticDistributionTemplate;
 import com.axelor.apps.account.db.AnalyticJournal;
 import com.axelor.apps.account.db.AnalyticMoveLine;
+import com.axelor.apps.account.exception.IExceptionMessage;
 import com.axelor.apps.account.service.app.AppAccountService;
 import com.axelor.apps.base.db.AppAccount;
 import com.axelor.apps.base.db.Company;
 import com.axelor.apps.base.db.Partner;
 import com.axelor.apps.base.db.Product;
 import com.axelor.apps.base.db.repo.AppAccountRepository;
+import com.axelor.exception.AxelorException;
+import com.axelor.exception.db.repo.TraceBackRepository;
+import com.axelor.i18n.I18n;
+import com.axelor.meta.CallMethod;
 import com.google.inject.Inject;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -143,6 +148,31 @@ public class AnalyticMoveLineServiceImpl implements AnalyticMoveLineService {
         } else {
           map.put(
               analyticDistributionLine.getAnalyticAxis(), analyticDistributionLine.getPercentage());
+        }
+      }
+      for (AnalyticAxis analyticAxis : map.keySet()) {
+        if (map.get(analyticAxis).compareTo(new BigDecimal(100)) > 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @CallMethod
+  @Override
+  public boolean validateAnalyticMoveLines(List<AnalyticMoveLine> analyticMoveLineList)
+      throws AxelorException {
+
+    if (analyticMoveLineList != null) {
+      Map<AnalyticAxis, BigDecimal> map = new HashMap<AnalyticAxis, BigDecimal>();
+      for (AnalyticMoveLine analyticMoveLine : analyticMoveLineList) {
+        if (map.containsKey(analyticMoveLine.getAnalyticAxis())) {
+          map.put(
+              analyticMoveLine.getAnalyticAxis(),
+              map.get(analyticMoveLine.getAnalyticAxis()).add(analyticMoveLine.getPercentage()));
+        } else {
+          map.put(analyticMoveLine.getAnalyticAxis(), analyticMoveLine.getPercentage());
         }
       }
       for (AnalyticAxis analyticAxis : map.keySet()) {

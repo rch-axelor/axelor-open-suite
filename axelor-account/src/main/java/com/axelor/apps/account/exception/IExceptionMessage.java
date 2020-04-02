@@ -25,6 +25,10 @@ package com.axelor.apps.account.exception;
 public interface IExceptionMessage {
 
   static final String INVOICE_LINE_TAX_LINE = /*$$(*/ "A tax line is missing" /*)*/;
+
+  static final String INVALID_ANALYTIC_MOVE_LINE = /*$$(*/
+      "Invalid Analitic moveLines, some axes percentage values are higher than 100%." /*)*/;
+
   /** Bank statement service */
   static final String BANK_STATEMENT_1 = /*$$(*/
       "%s : Computed balance and Ending Balance must be equal" /*)*/;
