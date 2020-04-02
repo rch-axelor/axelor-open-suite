@@ -40,7 +40,7 @@
        		<field name="analyticAxis" form-view="analytic-axis-form" grid-view="analytic-axis-grid"/>
 	        <field name="analyticAccount" form-view="analytic-account-form" grid-view="analytic-account-grid"/>
 	        <field name="date"/>
-	        <field name="percentage"/>
+	        <field name="percentage" min="0" max="100" onChange="action-analytic-move-line-method-validate-percentage"/>
             <field name="originalPieceAmount" aggregate="sum"/>
 	        <field name="amount"/>
 	        <field name="currency" canEdit="false"  form-view="currency-form" grid-view="currency-grid" />
@@ -56,10 +56,10 @@
     <form name="analytic-move-line-distribution-form" title="Analytic move line" model="com.axelor.apps.account.db.AnalyticMoveLine" onNew="action-analytic-move-line-attrs-set-original-piece-amount">
         <panel name="mainPanel" >
    	        <field name="analyticJournal" grid-view="analytic-journal-grid" form-view="analytic-journal-form"/>
-	        <field name="analyticAxis" form-view="analytic-axis-form" grid-view="analytic-axis-grid"/>
+	        <field name="analyticAxis" form-view="analytic-axis-form" grid-view="analytic-axis-grid" onChange="action-analytic-move-line-method-validate-percentage"/>
 	        <field name="analyticAccount" grid-view="analytic-account-grid" form-view="analytic-account-form"/>
 	        <field name="accountType" grid-view="account-type-grid" form-view="account-type-form"/>
-	        <field name="percentage" colSpan="4" onChange="action-analytic-move-line-method-compute-amount"/>
+	        <field name="percentage" colSpan="4" min="0" max="100" onChange="action-analytic-move-line-method-validate-percentage,action-analytic-move-line-method-compute-amount"/>
             <field name="originalPieceAmount" aggregate="sum"/>
 	        <field name="amount" colSpan="4" readonly="true"/>
 	        <field name="date" colSpan="4"/>
@@ -67,7 +67,11 @@
 	        <field name="typeSelect"/>
         </panel>      
     </form>
-    
+
+    <action-method name="action-analytic-move-line-method-validate-percentage">
+    	<call class="com.axelor.apps.account.web.AnalyticMoveLineController" method="validatePercentage"/>
+    </action-method>
+
     <action-method name="action-analytic-move-line-method-compute-amount">
     	<call class="com.axelor.apps.account.web.AnalyticDistributionLineController" method="computeAmount"/>
     </action-method>

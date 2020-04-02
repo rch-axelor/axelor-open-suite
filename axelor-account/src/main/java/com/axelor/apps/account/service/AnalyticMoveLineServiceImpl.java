@@ -22,12 +22,15 @@ import com.axelor.apps.account.db.AnalyticDistributionLine;
 import com.axelor.apps.account.db.AnalyticDistributionTemplate;
 import com.axelor.apps.account.db.AnalyticJournal;
 import com.axelor.apps.account.db.AnalyticMoveLine;
+import com.axelor.apps.account.db.InvoiceLine;
+import com.axelor.apps.account.db.MoveLine;
 import com.axelor.apps.account.service.app.AppAccountService;
 import com.axelor.apps.base.db.AppAccount;
 import com.axelor.apps.base.db.Company;
 import com.axelor.apps.base.db.Partner;
 import com.axelor.apps.base.db.Product;
 import com.axelor.apps.base.db.repo.AppAccountRepository;
+import com.axelor.rpc.Context;
 import com.google.inject.Inject;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -152,5 +155,40 @@ public class AnalyticMoveLineServiceImpl implements AnalyticMoveLineService {
       }
     }
     return true;
+  }
+
+  @Override
+  public boolean validateAnalyticMoveLines(List<AnalyticMoveLine> analyticMoveLineList) {
+
+    if (analyticMoveLineList != null) {
+      Map<AnalyticAxis, BigDecimal> map = new HashMap<AnalyticAxis, BigDecimal>();
+      for (AnalyticMoveLine analyticMoveLine : analyticMoveLineList) {
+        if (map.containsKey(analyticMoveLine.getAnalyticAxis())) {
+          map.put(
+              analyticMoveLine.getAnalyticAxis(),
+              map.get(analyticMoveLine.getAnalyticAxis()).add(analyticMoveLine.getPercentage()));
+        } else {
+          map.put(analyticMoveLine.getAnalyticAxis(), analyticMoveLine.getPercentage());
+        }
+      }
+      for (AnalyticAxis analyticAxis : map.keySet()) {
+        if (map.get(analyticAxis).compareTo(new BigDecimal(100)) > 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public List<AnalyticMoveLine> getAnalyticMoveLineList(Context parentContext) {
+
+    Class<?> klass = parentContext.getContextClass();
+    if (klass.isAssignableFrom(InvoiceLine.class)) {
+      return parentContext.asType(InvoiceLine.class).getAnalyticMoveLineList();
+    } else if (klass.isAssignableFrom(MoveLine.class)) {
+      return parentContext.asType(MoveLine.class).getAnalyticMoveLineList();
+    }
+    return null;
   }
 }
