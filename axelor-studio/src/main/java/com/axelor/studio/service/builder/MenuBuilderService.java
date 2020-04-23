@@ -17,11 +17,16 @@
  */
 package com.axelor.studio.service.builder;
 
+import com.axelor.apps.tool.QueryBuilder;
+import com.axelor.common.Inflector;
+import com.axelor.common.StringUtils;
 import com.axelor.exception.service.TraceBackService;
+import com.axelor.inject.Beans;
 import com.axelor.meta.MetaStore;
 import com.axelor.meta.db.MetaAction;
 import com.axelor.meta.db.MetaJsonRecord;
 import com.axelor.meta.db.MetaMenu;
+import com.axelor.meta.db.MetaView;
 import com.axelor.meta.loader.XMLViews;
 import com.axelor.meta.schema.ObjectViews;
 import com.axelor.meta.schema.actions.Action;
@@ -29,11 +34,15 @@ import com.axelor.meta.schema.actions.ActionView;
 import com.axelor.studio.db.ActionBuilder;
 import com.axelor.studio.db.ActionBuilderLine;
 import com.axelor.studio.db.ActionBuilderView;
+import com.axelor.studio.db.AppBuilder;
 import com.axelor.studio.db.MenuBuilder;
 import com.axelor.studio.db.repo.ActionBuilderRepository;
+import com.axelor.studio.db.repo.MenuBuilderRepo;
 import com.axelor.studio.service.StudioMetaService;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.xml.bind.JAXBException;
@@ -115,7 +124,100 @@ public class MenuBuilderService {
     } catch (JAXBException e) {
       TraceBackService.trace(e);
     }
-
     return Optional.empty();
+  }
+
+  @Transactional
+  public MenuBuilder updateMenuBuilder(
+      MenuBuilder menuBuilder,
+      String objectName,
+      String menuName,
+      AppBuilder appBuilder,
+      String objectClass,
+      Boolean isJson,
+      String domain) {
+
+    menuBuilder.setName(this.generateMenuBuilderName(menuName));
+    menuBuilder.setAppBuilder(appBuilder);
+
+    menuBuilder.setShowAction(true);
+    ActionBuilder actionBuilder = menuBuilder.getActionBuilder();
+    if (actionBuilder == null) {
+      actionBuilder = new ActionBuilder();
+    }
+    actionBuilder.setTypeSelect(ActionBuilderRepository.TYPE_SELECT_VIEW);
+    actionBuilder.setIsJson(isJson);
+    actionBuilder.setModel(objectName);
+    if (!Strings.isNullOrEmpty(domain)) {
+      actionBuilder.setDomainCondition(domain);
+    }
+    menuBuilder.setActionBuilder(actionBuilder);
+    setActionViews(actionBuilder, isJson, objectName, objectClass);
+
+    return Beans.get(MenuBuilderRepo.class).save(menuBuilder);
+  }
+
+  private void setActionViews(
+      ActionBuilder actionBuilder, Boolean isJson, String objectName, String objectClass) {
+
+    List<ActionBuilderView> views = actionBuilder.getActionBuilderViews();
+    if (views == null) {
+      views = new ArrayList<>();
+      actionBuilder.setActionBuilderViews(views);
+    }
+
+    String viewName = Inflector.getInstance().dasherize(objectName);
+    String title = null;
+    if (isJson) {
+      title = objectName;
+      viewName = "custom-model-" + objectName;
+    }
+
+    String gridName;
+    MetaView gridView = this.getMetaView(objectClass, "grid", title);
+    if (gridView != null) {
+      gridName = gridView.getName();
+    } else {
+      gridName = viewName + "-grid";
+    }
+    this.setActionBuilderView("grid", gridName, views);
+
+    String formName;
+    MetaView formView = this.getMetaView(objectClass, "form", title);
+    if (formView != null) {
+      formName = formView.getName();
+    } else {
+      formName = viewName + "-form";
+    }
+    this.setActionBuilderView("form", formName, views);
+  }
+
+  private MetaView getMetaView(String model, String type, String title) {
+
+    QueryBuilder<MetaView> metaViewQuery =
+        QueryBuilder.of(MetaView.class)
+            .add("self.model = :model")
+            .add("self.type = :type")
+            .bind("model", model)
+            .bind("type", type);
+
+    if (!StringUtils.isBlank(title)) {
+      metaViewQuery.add("self.title = :title").bind("title", title);
+    }
+
+    return metaViewQuery.build().fetchOne();
+  }
+
+  private void setActionBuilderView(
+      String viewType, String viewName, List<ActionBuilderView> actionBuilderViews) {
+
+    ActionBuilderView actionBuilderView = new ActionBuilderView();
+    actionBuilderView.setViewType(viewType);
+    actionBuilderView.setViewName(viewName);
+    actionBuilderViews.add(actionBuilderView);
+  }
+
+  private String generateMenuBuilderName(String name) {
+    return "studio-menu-" + name.toLowerCase().replaceAll("[ ]+", "-");
   }
 }

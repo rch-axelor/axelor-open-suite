@@ -23,6 +23,7 @@ import com.axelor.db.mapper.Mapper;
 import com.axelor.exception.AxelorException;
 import com.axelor.exception.service.TraceBackService;
 import com.axelor.i18n.I18n;
+import com.axelor.inject.Beans;
 import com.axelor.meta.MetaStore;
 import com.axelor.meta.db.MetaAction;
 import com.axelor.meta.db.MetaField;
@@ -53,6 +54,7 @@ import com.axelor.rpc.Request;
 import com.axelor.rpc.Resource;
 import com.axelor.studio.db.Wkf;
 import com.axelor.studio.db.WkfNode;
+import com.axelor.studio.db.repo.MenuBuilderRepo;
 import com.axelor.studio.db.repo.WkfRepository;
 import com.axelor.studio.exception.IExceptionMessage;
 import com.axelor.studio.service.StudioMetaService;
@@ -561,6 +563,10 @@ public class WkfService {
       if (!node.getMetaActionSet().isEmpty()) {
         builder.append("," + nodeService.getActionName(node.getName()));
       }
+
+      if (node.getMenuBuilder() != null) {
+        Beans.get(MenuBuilderRepo.class).remove(node.getMenuBuilder());
+      }
     }
     builder.append("," + trackingAction);
     actions = builder.toString();
@@ -755,6 +761,10 @@ public class WkfService {
       }
       if (!node.getMetaActionSet().isEmpty()) {
         actions.add(nodeService.getActionName(node.getName()));
+      }
+
+      if (node.getMenuBuilder() != null && node.getMenuBuilder().getMetaMenu() != null) {
+        Beans.get(MenuBuilderRepo.class).remove(node.getMenuBuilder());
       }
     }
 

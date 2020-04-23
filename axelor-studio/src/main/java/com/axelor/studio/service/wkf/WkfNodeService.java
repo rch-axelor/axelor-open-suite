@@ -24,14 +24,18 @@ import com.axelor.exception.AxelorException;
 import com.axelor.exception.db.repo.TraceBackRepository;
 import com.axelor.inject.Beans;
 import com.axelor.meta.db.MetaAction;
+import com.axelor.meta.db.MetaJsonRecord;
 import com.axelor.meta.db.MetaModel;
 import com.axelor.meta.db.MetaSelect;
 import com.axelor.meta.db.MetaSelectItem;
 import com.axelor.meta.db.repo.MetaModelRepository;
 import com.axelor.meta.db.repo.MetaSelectRepository;
 import com.axelor.meta.schema.views.Selection.Option;
+import com.axelor.studio.db.MenuBuilder;
+import com.axelor.studio.db.Wkf;
 import com.axelor.studio.db.WkfNode;
 import com.axelor.studio.exception.IExceptionMessage;
+import com.axelor.studio.service.builder.MenuBuilderService;
 import com.axelor.studio.web.WkfController;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
@@ -235,10 +239,44 @@ class WkfNodeService {
         this.wkfService.updateActionGroup(name, actions);
       }
 
+      if (node.getIsGenerateMenu()) {
+
+        Wkf wkf = node.getWkf();
+        String menuName = String.format("%s-%s", wkf.getModel(), node.getName());
+
+        MenuBuilder menuBuilder = node.getMenuBuilder();
+        if (menuBuilder != null) {
+
+          Boolean isJson = wkf.getIsJson();
+          String domain = getDomain(wkf, node.getSequence());
+          menuBuilder =
+              Beans.get(MenuBuilderService.class)
+                  .updateMenuBuilder(
+                      menuBuilder,
+                      wkf.getModel(),
+                      menuName,
+                      wkf.getAppBuilder(),
+                      isJson ? MetaJsonRecord.class.getName() : wkf.getModel(),
+                      wkf.getIsJson(),
+                      domain);
+        }
+      }
+
       oldSequenceCounter++;
     }
 
     return defaultValue;
+  }
+
+  private String getDomain(Wkf wkf, Integer fieldValue) {
+
+    if (wkf.getIsJson()) {
+      return String.format(
+          "json_extract_integer(self.attrs, '%s') = %s",
+          wkf.getStatusField().getName(), fieldValue);
+    } else {
+      return String.format("self.%s = %s", wkf.getStatusMetaField().getName(), fieldValue);
+    }
   }
 
   public String getActionName(String node) {
