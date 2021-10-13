@@ -54,8 +54,10 @@ import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.mail.MessagingException;
@@ -155,7 +157,10 @@ public class MessageServiceBaseImpl extends MessageServiceImpl implements Messag
                 .collect(Collectors.toList()));
       }
     }
-
+    
+    Map<String, Long> relatedMap = new HashMap<>();
+    // TODO : 
+    
     for (ModelEmailLink modelEmailLink : appBase.getEmailLinkList()) {
       try {
         String className = modelEmailLink.getMetaModel().getFullName();
@@ -184,11 +189,15 @@ public class MessageServiceBaseImpl extends MessageServiceImpl implements Messag
         }
 
         for (Model relatedRecord : relatedRecords) {
-          addMessageRelatedTo(message, className, relatedRecord.getId());
+          relatedMap.put(className, relatedRecord.getId());
         }
       } catch (Exception e) {
         TraceBackService.trace(e);
       }
+    }
+    
+    for (Entry<String, Long> entry : relatedMap.entrySet()) {
+      addMessageRelatedTo(message, entry.getKey(), entry.getValue());
     }
   }
 

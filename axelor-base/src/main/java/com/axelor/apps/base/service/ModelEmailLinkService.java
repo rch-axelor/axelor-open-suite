@@ -17,10 +17,12 @@
  */
 package com.axelor.apps.base.service;
 
+import java.util.List;
+
 import com.axelor.apps.base.db.ModelEmailLink;
 import com.axelor.exception.AxelorException;
 
 public interface ModelEmailLinkService {
 
-  public boolean validateModelFields(ModelEmailLink modelEmailLink) throws AxelorException;
+  public void validateEmailLinks(List<ModelEmailLink> emailLinkList) throws AxelorException;
 }
