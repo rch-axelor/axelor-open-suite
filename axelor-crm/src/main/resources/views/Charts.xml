@@ -3,8 +3,6 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_5.4.xsd">
 
-
-
   <chart name="chart.dashboard.opportunities.sale.stage.amount.bar"
     title="Opportunities By Sale Stage">
     <dataset type="sql">
@@ -34,6 +32,9 @@
     </dataset>
     <category key="_sale_stage" type="text" title="Sales Stage"/>
     <series key="amount" type="bar" title="Amount"/>
+    <config name="onClick" value="com.axelor.apps.base.web.ChartController:chartOnClick"/>
+    <config name="_model" value="com.axelor.apps.crm.db.Opportunity"/>
+    <config name="_filter" value="coalesce(nullif(message_value, ''), message_key)"/>
   </chart>
 
   <chart name="chart.dashboard.opportunities.sale.stage.amount.funnel"
@@ -100,6 +101,10 @@
     </dataset>
     <category key="_sale_stage" type="text" title="Sales Stage"/>
     <series key="amount" type="bar" groupBy="opp_type_name" title="Amount"/>
+    <config name="onClick" value="com.axelor.apps.base.web.ChartController:chartOnClick"/>
+    <config name="_model" value="com.axelor.apps.crm.db.Opportunity"/>
+    <config name="_filter" value="coalesce(nullif(message_value, ''), message_key)"/>
+    <config name="_groupFilter" value="opp_type.name"/>
   </chart>
 
   <chart name="chart.dashboard.opportunities.source.amount.bar"
@@ -162,6 +167,9 @@
     </dataset>
     <category key="_source" type="text" title="Source"/>
     <series key="lead_won" type="donut" title="Opportunities"/>
+    <config name="onClick" value="com.axelor.apps.base.web.ChartController:chartOnClick"/>
+    <config name="_model" value="com.axelor.apps.crm.db.Opportunity"/>
+    <config name="_filter" value="Source.name"/>
   </chart>
 
   <chart name="chart.dashboard.opportunities.won.by.saleman.bar"
