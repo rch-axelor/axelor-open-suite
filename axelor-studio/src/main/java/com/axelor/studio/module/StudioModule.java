@@ -36,6 +36,12 @@ import com.axelor.studio.db.repo.SelectionBuilderRepo;
 import com.axelor.studio.db.repo.SelectionBuilderRepository;
 import com.axelor.studio.service.ChartRecordViewService;
 import com.axelor.studio.service.ChartRecordViewServiceImpl;
+import com.axelor.studio.service.DataFormJsonModelService;
+import com.axelor.studio.service.DataFormJsonModelServiceImpl;
+import com.axelor.studio.service.DataFormMetaModelService;
+import com.axelor.studio.service.DataFormMetaModelServiceImpl;
+import com.axelor.studio.service.DataFormService;
+import com.axelor.studio.service.DataFormServiceImpl;
 import com.axelor.studio.service.loader.AppLoaderExportService;
 import com.axelor.studio.service.loader.AppLoaderExportServiceImpl;
 import com.axelor.studio.service.loader.AppLoaderImportService;
@@ -59,5 +65,8 @@ public class StudioModule extends AxelorModule {
     bind(AppLoaderImportService.class).to(AppLoaderImportServiceImpl.class);
     bind(AppLoaderExportService.class).to(AppLoaderExportServiceImpl.class);
     bind(ChartRecordViewService.class).to(ChartRecordViewServiceImpl.class);
+    bind(DataFormService.class).to(DataFormServiceImpl.class);
+    bind(DataFormMetaModelService.class).to(DataFormMetaModelServiceImpl.class);
+    bind(DataFormJsonModelService.class).to(DataFormJsonModelServiceImpl.class);
   }
 }
